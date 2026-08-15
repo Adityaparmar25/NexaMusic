@@ -1,318 +1,139 @@
-# 🎵 NexaMusic
+# NexaMusic
 
-> Next-generation music streaming platform — cinematic, immersive, zero sign-up.
+A small music streaming app I built to learn the Next.js App Router properly, with a real database and a real audio player instead of yet another todo app. No sign up required to listen, tracks are served straight from Google Drive so there's no storage bill, and there's a lightweight admin panel to manage the catalog.
 
-Built with **Next.js 14 · TypeScript · MongoDB Atlas · Zustand · Tailwind CSS**  
-Served from **Google Drive** (15 GB free storage) · Deployed on **Vercel**
+Built with Next.js 14, TypeScript, MongoDB Atlas, Zustand, and Tailwind CSS. Deployed on Vercel.
 
----
+## Features
 
-## Project Structure
+- Browse, search, and play tracks with a persistent bottom player
+- Keyboard shortcuts for play/pause, seek, mute, and next/previous
+- Liked tracks and recently played, stored locally
+- Admin panel to add, edit, feature, and soft delete tracks
+- Play count analytics and a genre breakdown chart
+- Audio files hosted on Google Drive instead of paid object storage
+
+## Project structure
 
 ```
 nexamusic/
-├── app/                    # Next.js 14 App Router
-│   ├── globals.css         # Tailwind base + all keyframes
-│   ├── layout.tsx          # Root layout + metadata
-│   ├── page.tsx            # Home page (orchestrates all sections)
-│   ├── loading.tsx         # Root loading skeleton
-│   ├── error.tsx           # Global error boundary
-│   ├── not-found.tsx       # 404 page
-│   └── api/
-│       ├── tracks/route.ts          # GET list, POST create
-│       ├── tracks/[id]/route.ts     # GET, PUT, DELETE
-│       ├── tracks/[id]/play/route.ts# POST increment play count
-│       ├── tracks/featured/route.ts # GET featured tracks
-│       ├── search/route.ts          # GET fuzzy search
-│       └── admin/login/route.ts     # POST login → JWT cookie
-│
+├── app/                    Next.js App Router pages and API routes
+│   ├── api/tracks/         CRUD for tracks, play counts, featured, search
+│   └── api/admin/login/    Admin login, issues a JWT cookie
 ├── components/
-│   ├── ui/                 # EqBars · Waveform · GenreBadge · Skeleton · Notification · KeyboardHUD
-│   ├── layout/Navbar.tsx
-│   ├── hero/Hero.tsx
-│   ├── tracks/             # TrackCard · TrackGrid · HorizRow · RecentRow · LikedRow
-│   ├── player/             # Player · PlayerProgress · NowPlaying
-│   └── admin/              # AdminLogin · AdminPanel · Dashboard · TrackForm · Analytics
-│
+│   ├── ui/                 EqBars, Waveform, GenreBadge, Skeleton, etc.
+│   ├── layout/              Navbar
+│   ├── hero/
+│   ├── tracks/              TrackCard, TrackGrid, HorizRow, RecentRow, LikedRow
+│   ├── player/               Player, PlayerProgress, NowPlaying
+│   └── admin/                 AdminLogin, AdminPanel, Dashboard, TrackForm, Analytics
 ├── hooks/
-│   ├── useAudio.ts         # Core audio engine (fixes silent audio)
-│   ├── useKeyboard.ts      # Global keyboard shortcuts
-│   └── useLocalStorage.ts  # Type-safe localStorage hook
-│
-├── store/
-│   └── usePlayerStore.ts   # Zustand global player state
-│
+│   ├── useAudio.ts          Core audio engine
+│   ├── useKeyboard.ts       Global keyboard shortcuts
+│   └── useLocalStorage.ts    Type safe localStorage wrapper
+├── store/usePlayerStore.ts  Zustand global player state
 ├── lib/
-│   ├── mongodb.ts          # Mongoose singleton connection
-│   ├── drive.ts            # Google Drive URL helpers
-│   └── jwt.ts              # JWT sign/verify (jose)
-│
-├── models/
-│   ├── Track.ts            # Mongoose Track schema
-│   └── Admin.ts            # Mongoose Admin schema
-│
-├── types/index.ts          # All shared TypeScript interfaces
-├── constants/              # colors · genres · sampleTracks
-├── scripts/
-│   ├── seed-admin.ts       # Create first admin user
-│   └── seed-tracks.ts      # Seed sample tracks
-│
-├── middleware.ts            # JWT guard for /admin routes
-├── tailwind.config.ts
-├── next.config.js
-├── vercel.json
-└── tsconfig.json
+│   ├── mongodb.ts           Mongoose connection
+│   ├── drive.ts              Google Drive URL helpers
+│   └── jwt.ts                 JWT sign and verify (jose)
+├── models/                   Track and Admin Mongoose schemas
+├── types/index.ts            Shared TypeScript interfaces
+├── scripts/                  seed admin, seed sample tracks
+└── middleware.ts             Guards /admin routes with the JWT cookie
 ```
-
----
 
 ## Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Node.js | ≥ 20.x |
-| npm / pnpm | latest |
-| MongoDB Atlas | Free M0 cluster |
-| Google Drive | Any Google account |
+- Node.js 20 or newer
+- npm or pnpm
+- A free MongoDB Atlas M0 cluster
+- A Google account with some free Drive storage
 
----
+## Getting started
 
-## 1 — Local Development Setup
-
-### 1.1 Clone & Install
+Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/yourname/nexamusic.git
+git clone https://github.com/adityaparmar25/nexamusic.git
 cd nexamusic
 npm install
 ```
 
-### 1.2 Create `.env.local`
+Create a `.env.local` file in the root:
 
 ```env
-# MongoDB Atlas
 MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/nexamusic
 
-# JWT secret — generate with: openssl rand -base64 32
-NEXTAUTH_SECRET=your-random-32-char-string-here
+NEXTAUTH_SECRET=generate this with openssl rand base64 32
 NEXTAUTH_URL=http://localhost:3000
 
-# Google Drive API (see Section 3)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REFRESH_TOKEN=
 GOOGLE_DRIVE_FOLDER_ID=
 
-# Admin seed credentials
-ADMIN_SEED_EMAIL=admin@nexamusic.com
-ADMIN_SEED_PASSWORD=YourStrongPassword123!
+ADMIN_SEED_EMAIL=you@example.com
+ADMIN_SEED_PASSWORD=choose something strong, this seeds your real admin account
 ```
 
-### 1.3 Seed the database
+Seed the database, then run the dev server:
 
 ```bash
-# Create admin user
 npm run seed
-
-# (Optional) Seed sample tracks
-npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/seed-tracks.ts
-```
-
-### 1.4 Run dev server
-
-```bash
 npm run dev
-# → http://localhost:3000
 ```
 
----
+The app runs at `http://localhost:3000`.
 
-## 2 — MongoDB Atlas Setup
+## MongoDB Atlas setup
 
-1. Go to [cloud.mongodb.com](https://cloud.mongodb.com) → Create free **M0** cluster
-2. **Database Access** → Add user with `readWrite` on `nexamusic` database
-3. **Network Access** → Add IP `0.0.0.0/0` (allow all) for development  
-   *(In production: add Vercel IP ranges only)*
-4. Click **Connect → Drivers** → copy the connection string
-5. Paste into `MONGODB_URI` replacing `<user>` and `<pass>`
+1. Create a free M0 cluster at cloud.mongodb.com
+2. Under Database Access, add a user with readWrite on the `nexamusic` database
+3. Under Network Access, allow `0.0.0.0/0` for local development (lock this down to Vercel's IP ranges once you deploy)
+4. Copy the connection string from Connect > Drivers and drop it into `MONGODB_URI`
 
----
+## Google Drive API setup
 
-## 3 — Google Drive API Setup
+This project streams audio directly from Google Drive rather than paying for object storage, which is overkill for a personal project like this.
 
-### 3.1 Create credentials
+1. Create a project in the Google Cloud console and enable the Drive API
+2. Create an OAuth 2.0 client (type: Web application), with `https://developers.google.com/oauthplayground` as an authorized redirect URI
+3. Open the OAuth Playground, use your own client ID and secret under settings, and authorize the `drive.readonly` scope
+4. Exchange the authorization code for tokens and copy the refresh token into `.env.local`
+5. Create a folder in your Drive named `NexaMusic`, share it as "anyone with the link can view", and copy the folder ID from the URL into `GOOGLE_DRIVE_FOLDER_ID`
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a new project (e.g. "NexaMusic")
-3. **APIs & Services** → Enable **Google Drive API**
-4. **Credentials** → Create **OAuth 2.0 Client ID** (type: Web application)
-5. Add authorized redirect URI: `https://developers.google.com/oauthplayground`
-6. Copy **Client ID** and **Client Secret** to `.env.local`
+To add a track: upload the file to that folder, set sharing to anyone with the link, grab the file ID from the share URL, and paste it into the admin panel when adding a track.
 
-### 3.2 Get Refresh Token
+## A note on the audio bug
 
-1. Open [OAuth Playground](https://developers.google.com/oauthplayground)
-2. Click ⚙️ (settings) → check **Use your own OAuth credentials** → paste Client ID & Secret
-3. Scope: `https://www.googleapis.com/auth/drive.readonly`
-4. Click **Authorize APIs** → sign in → **Exchange authorization code for tokens**
-5. Copy **Refresh Token** to `.env.local`
+Early on, audio would load but never actually play, with no error in the console. The cause was `crossOrigin="anonymous"` set on the `<audio>` element in `useAudio.ts`. Google Drive and other external audio hosts don't send CORS headers, so the browser was silently dropping playback. Removing that attribute fixed it. Only set `crossOrigin` if you control the server and it explicitly sends CORS headers.
 
-### 3.3 Create the Drive folder
-
-1. Create a folder named `NexaMusic` in your Google Drive
-2. Right-click → **Get link** → copy the folder ID (the part after `/folders/`)
-3. Paste into `GOOGLE_DRIVE_FOLDER_ID`
-
-### 3.4 Upload a track
-
-1. Upload an MP3/WAV to the `NexaMusic` folder
-2. Right-click → **Share** → **Anyone with the link can view**
-3. Copy the link → extract the file ID (the long string in the URL)
-4. In Admin Panel → paste the file ID
-
----
-
-## 4 — Audio Source Fix (Important)
-
-The previous build was silent because of `crossOrigin="anonymous"` on the `<audio>` element.
-
-**Root cause:** External MP3 hosts (SoundHelix, Google Drive download links) do NOT send CORS headers. The browser silently blocked audio loading.
-
-**Fix applied in `hooks/useAudio.ts`:**
-```typescript
-// ❌ OLD (broken — CORS block → silent audio)
-const audio = new Audio();
-audio.crossOrigin = "anonymous";   // ← this was killing playback
-
-// ✅ NEW (correct)
-const audio = new Audio();
-// No crossOrigin set. Works for all external streams.
-// Only set crossOrigin if YOUR server explicitly sends CORS headers.
-```
-
-**For Google Drive audio streaming:**
-```
-// Stream URL format (no crossOrigin needed)
-https://drive.google.com/uc?export=download&id=FILE_ID
-```
-
----
-
-## 5 — Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Key | Action |
 |-----|--------|
-| `Space` | Play / Pause |
-| `←` / `→` | Seek ±10 seconds |
-| `M` | Mute / Unmute |
-| `N` | Next track |
-| `P` | Previous track |
-| `Esc` | Close Now Playing |
-| `/` | Toggle shortcut HUD |
+| Space | Play / pause |
+| Left / Right arrow | Seek 10 seconds |
+| M | Mute / unmute |
+| N | Next track |
+| P | Previous track |
+| Esc | Close now playing |
+| / | Toggle shortcut list |
 
----
+## Admin panel
 
-## 6 — Admin Panel
+Log in from the Admin button in the navbar using the email and password you set in `ADMIN_SEED_EMAIL` and `ADMIN_SEED_PASSWORD`. From there you can add, edit, and soft delete tracks, toggle which ones are featured, and check play count and genre stats.
 
-1. Click **Admin** button in the navbar
-2. Login: `admin@nexamusic.com` / `admin123` *(demo)*  
-   *(In production, use the credentials from your `.env.local` seed)*
-3. Features:
-   - Add / Edit / Soft-delete tracks
-   - Toggle featured status (★)
-   - Restore deactivated tracks
-   - Play count analytics chart
-   - Genre breakdown stats
+Passwords are hashed with bcrypt, and the session is a JWT stored in an httpOnly cookie, not localStorage. Admin routes are protected by middleware, and the login endpoint is rate limited.
 
----
+## Deploying to Vercel
 
-## 7 — Deploying to Vercel
+Push the repo to GitHub, then import it into Vercel. Framework detection should pick up Next.js automatically. Add every variable from `.env.local` in the Vercel project settings, update `NEXTAUTH_URL` to your production domain once you have one, and run the seed script again pointing at your Atlas cluster so the production database has an admin user.
 
-### 7.1 Push to GitHub
+## Tech stack
 
-```bash
-git init
-git add .
-git commit -m "feat: initial NexaMusic"
-git remote add origin https://github.com/yourname/nexamusic.git
-git push -u origin main
-```
-
-### 7.2 Import to Vercel
-
-1. Go to [vercel.com](https://vercel.com) → New Project
-2. Import your GitHub repo
-3. Framework: **Next.js** (auto-detected)
-4. Add all environment variables from `.env.local`
-5. Click **Deploy**
-
-### 7.3 After deploy
-
-```bash
-# Update NEXTAUTH_URL to your production domain
-NEXTAUTH_URL=https://nexamusic.vercel.app
-
-# Re-run seed pointing to Atlas
-npm run seed
-```
-
----
-
-## 8 — Performance Targets
-
-| Metric | Target | Status |
-|--------|--------|--------|
-| LCP | < 2.5s | ✅ Images lazy-loaded, fonts preloaded |
-| FID | < 100ms | ✅ No heavy JS on main thread |
-| CLS | < 0.1 | ✅ Fixed dimensions on all images |
-| Lighthouse Score | ≥ 90 | ✅ SSR, semantic HTML, ARIA labels |
-| Audio start | < 1.5s | ✅ `preload="metadata"`, no CORS block |
-
----
-
-## 9 — Security Checklist
-
-- [x] Passwords hashed with `bcryptjs` (12 salt rounds)
-- [x] JWT stored in `httpOnly` cookie (not localStorage)
-- [x] Admin routes protected by `middleware.ts`
-- [x] Rate limiting on login endpoint (5 req/min per IP)
-- [x] Input validation on all API routes
-- [x] Soft delete (tracks never permanently erased)
-- [x] Environment variables never committed to git
-- [x] CSP and security headers in `vercel.json`
-- [x] `NEXTAUTH_SECRET` randomly generated (not hardcoded)
-
----
-
-## 10 — Adding More Tracks (Production Flow)
-
-1. Upload MP3 to Google Drive `NexaMusic` folder
-2. Set sharing to **Anyone with the link**
-3. Copy the **file ID** from the share URL
-4. Open Admin Panel → **Add Track**
-5. Paste file ID → fill metadata → **Publish**
-6. Track is live instantly — no restart needed
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS v3 |
-| State | Zustand 4 |
-| Database | MongoDB Atlas (free M0) |
-| ODM | Mongoose 8 |
-| Auth | JWT via `jose` |
-| Storage | Google Drive API v3 |
-| Deployment | Vercel (Hobby free) |
-| Icons | Lucide React |
-| Fonts | Inter (Google Fonts) |
-
----
+Next.js 14, TypeScript, Tailwind CSS, Zustand, MongoDB Atlas with Mongoose, JWT auth via jose, Google Drive API for storage, deployed on Vercel.
 
 ## License
 
-MIT © NexaMusic
+MIT
